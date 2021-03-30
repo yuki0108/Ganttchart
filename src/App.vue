@@ -2,6 +2,12 @@
   <div id="app">
     <div id="form"></div>
     <div id="gantt-header" class="h-12 p-2">
+      <button
+        @click="addTask"
+        class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 text-xs ml-4"
+      >
+        <span class="font-bold text-xs"> タスクの追加 </span>
+      </button>
       <div>
         <div
           class="fixed top-0 left-0 right-0 flex justify-center mt-24 z-50"
@@ -9,6 +15,8 @@
         >
           <div class="overlay" v-show="show" @click="show=false"></div>
           <div class="content" v-show="show">
+            <h2 class="font-bold" v-if="update_mode">タスクの更新</h2>
+            <h2 class="font-bold" v-else>タスクの追加</h2>
             <div class="my-4">
               <label class="text-xs">タスクのタイトル</label>
               <input
@@ -118,6 +126,12 @@
                 <div
                   class="border-r flex items-center font-bold w-48 text-sm pl-4"
                 >
+                  <button
+                    class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-1 text-xs mr-1"
+                    @click="editTask(list)"
+                  >
+                    編集
+                  </button>
                   {{list.name}}
                 </div>
 

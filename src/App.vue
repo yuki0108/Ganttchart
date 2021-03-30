@@ -2,6 +2,12 @@
   <div id="app">
     <div id="form"></div>
     <div id="gantt-header" class="h-12 p-2">
+      <button
+        @click="addTask"
+        class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 text-xs ml-4"
+      >
+        <span class="font-bold text-xs"> タスクの追加 </span>
+      </button>
       <div>
         <div
           class="fixed top-0 left-0 right-0 flex justify-center mt-24 z-50"
@@ -9,6 +15,8 @@
         >
           <div class="overlay" v-show="show" @click="show=false"></div>
           <div class="content" v-show="show">
+            <h2 class="font-bold" v-if="update_mode">タスクの更新</h2>
+            <h2 class="font-bold" v-else>タスクの追加</h2>
             <div class="my-4">
               <label class="text-xs">タスクのタイトル</label>
               <input
@@ -226,7 +234,9 @@
 </template>
 
 <script>
+
 import moment from "moment";
+
 export default {
   name: 'App',
    data() {
@@ -260,6 +270,7 @@ export default {
               incharge_user: '',
               percentage: 0,
             },
+
             tasks: [],
           };
         },
@@ -307,6 +318,7 @@ export default {
             }
             return block_number;
           },
+
           getWindowSize() {
             this.inner_width = window.innerWidth;
             this.inner_height = window.innerHeight;
@@ -315,6 +327,21 @@ export default {
           },
           todayPosition() {
             this.$refs.calendar.scrollLeft = this.scrollDistance;
+          },
+
+
+          addTask() {
+            this.update_mode = false;
+            this.form = {};
+            this.show = true;
+          },
+
+          saveTask() {
+            this.form.id = Math.random();
+            this.tasks.push(this.form);
+            this.form = {};
+            this.show = false;
+            console.log(this.tasks);
           },
         },
         mounted() {
@@ -328,17 +355,11 @@ export default {
           calendarViewWidth() {
             return this.inner_width - this.task_width;
           },
+
           calendarViewHeight() {
             return this.inner_height - this.task_height - 48 - 20;
           },
 
-          scrollDistance() {
-            let start_date = moment(this.start_month);
-            let between_days = this.today.diff(start_date, 'days');
-            return (
-              (between_days + 1) * this.block_size - this.calendarViewWidth / 2
-            );
-          },
           lists() {
             let lists = [];
             this.tasks.map((task) => {
@@ -360,6 +381,7 @@ export default {
   background-color: gray;
   opacity: 0.5;
 }
+
 .content {
   background-color: white;
   position: relative;

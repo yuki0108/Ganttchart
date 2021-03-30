@@ -335,7 +335,6 @@ export default {
             this.$refs.calendar.scrollLeft = this.scrollDistance;
           },
 
-
           addTask() {
             this.update_mode = false;
             this.form = {};
@@ -348,29 +347,6 @@ export default {
             this.form = {};
             this.show = false;
             console.log(this.tasks);
-          },
-
-          editTask(task) {
-            this.update_mode = true;
-            this.show = true;
-            Object.assign(this.form, task);
-          },
-
-          updateTask(id) {
-            let task = this.tasks.find((task) => task.id === id);
-            Object.assign(task, this.form);
-            this.form = {};
-            this.show = false;
-          },
-
-          deleteTask(id) {
-            let delete_index;
-            this.tasks.map((task, index) => {
-              if (task.id === id) delete_index = index;
-            });
-            this.tasks.splice(delete_index, 1);
-            this.form = {};
-            this.show = false;
           },
         },
         mounted() {
@@ -406,8 +382,36 @@ export default {
             return lists;
           },
 
+          taskBars() {
+            let start_date = moment(this.start_month);
+            let top = 10;
+            let left;
+            let between;
+            let start;
+            let style;
+            return this.lists.map((list) => {
+              style = {};
+              let date_from = moment(list.start_date);
+              let date_to = moment(list.end_date);
+              between = date_to.diff(date_from, 'days');
+              between++;
+              start = date_from.diff(start_date, 'days');
+              left = start * this.block_size;
+              style = {
+                top: `${top}px`,
+                left: `${left}px`,
+                width: `${this.block_size * between}px`,
+              };
+
+              top = top + 40;
+              return {
+                style,
+                list,
+              };
+            });
+          },
         },
-      };
+      }; 
 </script>
 
 <style>

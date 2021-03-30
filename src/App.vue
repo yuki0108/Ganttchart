@@ -126,6 +126,12 @@
                 <div
                   class="border-r flex items-center font-bold w-48 text-sm pl-4"
                 >
+                  <button
+                    class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-1 text-xs mr-1"
+                    @click="editTask(list)"
+                  >
+                    編集
+                  </button>
                   {{list.name}}
                 </div>
 

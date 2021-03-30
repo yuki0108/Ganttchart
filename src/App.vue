@@ -126,6 +126,12 @@
                 <div
                   class="border-r flex items-center font-bold w-48 text-sm pl-4"
                 >
+                  <button
+                    class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-1 text-xs mr-1"
+                    @click="editTask(list)"
+                  >
+                    編集
+                  </button>
                   {{list.name}}
                 </div>
 
@@ -343,6 +349,29 @@ export default {
             this.show = false;
             console.log(this.tasks);
           },
+
+          editTask(task) {
+            this.update_mode = true;
+            this.show = true;
+            Object.assign(this.form, task);
+          },
+
+          updateTask(id) {
+            let task = this.tasks.find((task) => task.id === id);
+            Object.assign(task, this.form);
+            this.form = {};
+            this.show = false;
+          },
+
+          deleteTask(id) {
+            let delete_index;
+            this.tasks.map((task, index) => {
+              if (task.id === id) delete_index = index;
+            });
+            this.tasks.splice(delete_index, 1);
+            this.form = {};
+            this.show = false;
+          },
         },
         mounted() {
           this.getCalendar();
@@ -360,6 +389,15 @@ export default {
             return this.inner_height - this.task_height - 48 - 20;
           },
 
+          scrollDistance() {
+            let start_date = moment(this.start_month);
+            let between_days = this.today.diff(start_date, 'days');
+            return (
+              (between_days + 1) * this.block_size - this.calendarViewWidth / 2
+            );
+          },
+
+
           lists() {
             let lists = [];
             this.tasks.map((task) => {
@@ -367,6 +405,7 @@ export default {
             });
             return lists;
           },
+
         },
       };
 </script>

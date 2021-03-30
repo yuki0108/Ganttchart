@@ -126,12 +126,6 @@
                 <div
                   class="border-r flex items-center font-bold w-48 text-sm pl-4"
                 >
-                  <button
-                    class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-1 text-xs mr-1"
-                    @click="editTask(list)"
-                  >
-                    編集
-                  </button>
                   {{list.name}}
                 </div>
 
@@ -284,7 +278,7 @@ export default {
           getDays(year, month, block_number) {
             const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'];
             let days = [];
-            let date = moment(`${year}-${month}-01`);
+            let date = moment(`${year}-${month}-01`); 
             let num = date.daysInMonth();
             for (let i = 0; i < num; i++) {
               days.push({
@@ -334,7 +328,139 @@ export default {
           todayPosition() {
             this.$refs.calendar.scrollLeft = this.scrollDistance;
           },
+          mouseDownMove(list) {
+            this.dragging = true;
+            this.pageX = event.pageX;
+            this.element = event.target;
+            this.left = event.target.style.left;
+            this.task_id = list.id;
+          },
 
+          mouseMove() {
+            if (this.dragging) {
+              let diff = this.pageX - event.pageX;
+              this.element.style.left = `${
+                parseInt(this.left.replace('px', '')) - diff
+              }px`;
+            }
+          },
+          stopDrag() {
+            if (this.dragging) {
+              let diff = this.pageX - event.pageX;
+              let days = Math.ceil(diff / this.block_size);
+              if (days !== 0) {
+                let task = this.tasks.find((task) => task.id === this.task_id);
+                let start_date = moment(task.start_date).add(-days, 'days');
+                let end_date = moment(task.end_date).add(-days, 'days');
+                task['start_date'] = start_date.format('YYYY-MM-DD');
+                task['end_date'] = end_date.format('YYYY-MM-DD');
+              } else {
+                this.element.style.left = `${this.left.replace('px', '')}px`;
+              }
+            }
+            if (this.leftResizing) {
+              let diff = this.pageX - event.pageX;
+              let days = Math.ceil(diff / this.block_size);
+              if (days !== 0) {
+                let task = this.tasks.find((task) => task.id === this.task_id);
+                let start_date = moment(task.start_date).add(-days, 'days');
+                let end_date = moment(task.end_date);
+                if (end_date.diff(start_date, 'days') <= 0) {
+                  task['start_date'] = end_date.format('YYYY-MM-DD');
+                } else {
+                  task['start_date'] = start_date.format('YYYY-MM-DD');
+                }
+              } else {
+                this.element.style.width = this.width;
+                this.element.style.left = `${this.left.replace('px', '')}px`;
+              }
+            }
+
+            if (this.rightResizing) {
+              let diff = this.pageX - event.pageX;
+              let days = Math.ceil(diff / this.block_size);
+              if (days === 1) {
+                this.element.style.width = `${parseInt(
+                  this.width.replace('px', '')
+                )}px`;
+              } else if (days <= 2) {
+                days--;
+                let task = this.tasks.find((task) => task.id === this.task_id);
+                let end_date = moment(task.end_date).add(-days, 'days');
+                task['end_date'] = end_date.format('YYYY-MM-DD');
+              } else {
+                let task = this.tasks.find((task) => task.id === this.task_id);
+                let start_date = moment(task.start_date);
+                let end_date = moment(task.end_date).add(-days, 'days');
+                if (end_date.diff(start_date, 'days') < 0) {
+                  task['end_date'] = start_date.format('YYYY-MM-DD');
+                } else {
+                  task['end_date'] = end_date.format('YYYY-MM-DD');
+                }
+              }
+            }
+            this.dragging = false;
+            this.leftResizing = false;
+            this.rightResizing = false;
+          },
+
+          mouseDownResize(task, direction) {
+            direction === 'left'
+              ? (this.leftResizing = true)
+              : (this.rightResizing = true);
+            this.pageX = event.pageX;
+            this.width = event.target.parentElement.style.width;
+            this.left = event.target.parentElement.style.left;
+            this.element = event.target.parentElement;
+            this.task_id = task.id;
+          },
+
+          mouseResize() {
+            if (this.leftResizing) {
+              let diff = this.pageX - event.pageX;
+              if (
+                parseInt(this.width.replace('px', '')) + diff >
+                this.block_size
+              ) {
+                this.element.style.width = `${
+                  parseInt(this.width.replace('px', '')) + diff
+                }px`;
+                this.element.style.left = `${
+                  this.left.replace('px', '') - diff
+                }px`;
+              }
+            }
+            if (this.rightResizing) {
+              let diff = this.pageX - event.pageX;
+              if (
+                parseInt(this.width.replace('px', '')) - diff >
+                this.block_size
+              ) {
+                this.element.style.width = `${
+                  parseInt(this.width.replace('px', '')) - diff
+                }px`;
+              }
+            }
+          },
+
+          dragTask(dragTask) {
+            this.task = dragTask;
+          },
+
+          dragTaskOver(overTask) {
+            let deleteIndex;
+            let addIndex;
+            if (overTask.id !== this.task.id) {
+              this.tasks.map((task, index) => {
+                if (task.id === this.task.id) deleteIndex = index;
+              });
+              this.tasks.map((task, index) => {
+                if (task.id === overTask.id) addIndex = index;
+              });
+              this.tasks.splice(deleteIndex, 1);
+              this.tasks.splice(addIndex, 0, this.task);
+            }
+          },
 
           addTask() {
             this.update_mode = false;
@@ -350,28 +476,6 @@ export default {
             console.log(this.tasks);
           },
 
-          editTask(task) {
-            this.update_mode = true;
-            this.show = true;
-            Object.assign(this.form, task);
-          },
-
-          updateTask(id) {
-            let task = this.tasks.find((task) => task.id === id);
-            Object.assign(task, this.form);
-            this.form = {};
-            this.show = false;
-          },
-
-          deleteTask(id) {
-            let delete_index;
-            this.tasks.map((task, index) => {
-              if (task.id === id) delete_index = index;
-            });
-            this.tasks.splice(delete_index, 1);
-            this.form = {};
-            this.show = false;
-          },
         },
         mounted() {
           this.getCalendar();
@@ -379,6 +483,9 @@ export default {
           this.$nextTick(() => {
             this.todayPosition();
           });
+          window.addEventListener('mousemove', this.mouseMove);
+          window.addEventListener('mouseup', this.stopDrag);
+          window.addEventListener('mousemove', this.mouseResize);
         },
         computed: {
           calendarViewWidth() {
@@ -397,7 +504,6 @@ export default {
             );
           },
 
-
           lists() {
             let lists = [];
             this.tasks.map((task) => {
@@ -406,6 +512,34 @@ export default {
             return lists;
           },
 
+          taskBars() {
+            let start_date = moment(this.start_month);
+            let top = 10;
+            let left;
+            let between;
+            let start;
+            let style;
+            return this.lists.map((list) => {
+              style = {};
+              let date_from = moment(list.start_date);
+              let date_to = moment(list.end_date);
+              between = date_to.diff(date_from, 'days');
+              between++;
+              start = date_from.diff(start_date, 'days');
+              left = start * this.block_size;
+              style = {
+                top: `${top}px`,
+                left: `${left}px`,
+                width: `${this.block_size * between}px`,
+              };
+
+              top = top + 40;
+              return {
+                style,
+                list,
+              };
+            });
+          },
         },
       };
 </script>
